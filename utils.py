@@ -326,7 +326,7 @@ class UVGraph:
                 return [verts[(index0+i)%4] for i in range(4)]
             else:
                 raise Exception('something wrong')
-        pass
+      
     
     def get_face_co(self,verts):
         if len(verts)!=4:
