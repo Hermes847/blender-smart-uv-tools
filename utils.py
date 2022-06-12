@@ -1,3 +1,4 @@
+from audioop import avg
 import mathutils 
 import bpy 
 import bmesh
@@ -38,6 +39,7 @@ def cal_cos(p1,p2,p3):
 class UVGraph:
     
     def __init__(self,obj,uv_layer = None):       
+        self.obj = obj
         self.me = obj.data
         self.bm = bmesh.from_edit_mesh(self.me)
         if uv_layer:
@@ -361,6 +363,26 @@ class UVGraph:
         for i in range(len(islands)):
             s = avg_ratio/ratios[i]
             self.scale_uvs(s,s,islands[i])
+            
+    def fix_uv_geo_ratio(self,target_ratio):
+        obj_scale =  sum(self.obj.scale)/3
+        for island in self.get_islands():
+            r = self.get_uv_geo_ratio(island)
+            s = obj_scale * target_ratio / r
+            self.scale_uvs(s,s,island)
+            
+    def get_uv_geo_ratio(self,island):
+        max_len = 0
+        ratio = 0
+        for v1 in island:
+            for v2 in self.graph[v1]:
+                geo_len = (self.me.vertices[self.uvs[v1].vert.index].co-self.me.vertices[self.uvs[v2].vert.index].co).length
+                if geo_len > max_len:
+                    uv_len = (self.uvs[v1][self.uv_layer].uv-self.uvs[v2][self.uv_layer].uv).length 
+                    max_len = geo_len
+                    ratio = uv_len/geo_len
+        return ratio
+                    
 
     def random_select_uv(self,groups,k,type):
         if type == 'vertex':

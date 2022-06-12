@@ -110,12 +110,26 @@ class UniformScale(bpy.types.Operator):
     bl_undo_group = ""  # Unused without 'UNDO_GROUPED'.
     
     def execute(self,context):
-        obj = context.active_object
-        g = u.UVGraph(obj)
-        edges = g.get_edges_uvs(g.get_selected(),False)
-        g.uniform_all_shells([g.get_linked(x[0]) for x in edges],edges)
-        g.update_bmesh()     
+        objs = context.selected_objects
+        gs = [u.UVGraph(x) for x in objs]
+        values = []
+        for g in gs:
+            for island in g.get_islands():
+                values.append(g.get_uv_geo_ratio(island))
+                
+        avg_ratio = sum(values)/len(values)
+        for g in gs:
+            for island in g.get_islands():
+                g.fix_uv_geo_ratio(avg_ratio)
+            g.update_bmesh()     
+            
         return {'FINISHED'}
+        # obj = context.active_object
+        # g = u.UVGraph(obj)
+        # edges = g.get_edges_uvs(g.get_selected(),False)
+        # g.uniform_all_shells([g.get_linked(x[0]) for x in edges],edges)
+        # g.update_bmesh()     
+        # return {'FINISHED'}
 
 class SelectLongestEdges(bpy.types.Operator):
     bl_idname = 'uv.select_longest_edges'
